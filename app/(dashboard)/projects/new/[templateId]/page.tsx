@@ -1,0 +1,179 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/components/ui/use-toast'
+import { getTemplate, type ProjectTemplate } from '@/lib/project-templates'
+import { ArrowLeft } from 'lucide-react'
+
+export default function NewProjectFromTemplatePage({
+    params,
+}: {
+    params: { templateId: string }
+}) {
+    const router = useRouter()
+    const [template, setTemplate] = useState<ProjectTemplate | null>(null)
+    const [title, setTitle] = useState('')
+    const [description, setDescription] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const { toast } = useToast()
+
+    useEffect(() => {
+        const t = getTemplate(params.templateId)
+        if (t) {
+            setTemplate(t)
+            setTitle(`New ${t.name} Project`)
+            setDescription(t.description)
+        } else {
+            setError('Template not found')
+        }
+    }, [params.templateId])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+
+        try {
+            const res = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    description: description || undefined,
+                    researchType: template?.researchType || 'Other',
+                }),
+            })
+
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to create project')
+            }
+
+            toast({
+                variant: 'success',
+                title: 'Project created!',
+                description: `${title} has been successfully created.`,
+            })
+
+            router.push(`/projects/${data.project.id}`)
+        } catch (err: any) {
+            setError(err.message)
+            toast({
+                variant: 'destructive',
+                title: 'Failed to create project',
+                description: err.message,
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (error === 'Template not found') {
+        return (
+            <div className="p-8 text-center">
+                <h1 className="text-2xl font-bold text-red-600 mb-4">Template Not Found</h1>
+                <Button onClick={() => router.push('/projects/new')}>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Templates
+                </Button>
+            </div>
+        )
+    }
+
+    if (!template) {
+        return <div className="p-8">Loading template...</div>
+    }
+
+    return (
+        <div className="p-8 max-w-2xl mx-auto">
+            <div className="mb-8">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.push('/projects/new')}
+                    className="mb-4"
+                >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Templates
+                </Button>
+                <h1 className="text-3xl font-bold mb-2">Project Details</h1>
+                <p className="text-gray-600">
+                    Using template: <strong>{template.name}</strong> {template.icon}
+                </p>
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Project Information</CardTitle>
+                    <CardDescription>
+                        Customize your project details
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Project Title *</Label>
+                            <Input
+                                id="title"
+                                placeholder="e.g., Li-ion Battery Degradation Study"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <textarea
+                                id="description"
+                                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                placeholder="Describe the goals and scope of your research..."
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                            <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
+                                <strong>This template includes:</strong>
+                            </p>
+                            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                                {template.defaultStructure.pages.map((page, idx) => (
+                                    <li key={idx}>• Page: "{page.title}"</li>
+                                ))}
+                                {template.defaultStructure.tags.length > 0 && (
+                                    <li>• Tags: {template.defaultStructure.tags.join(', ')}</li>
+                                )}
+                            </ul>
+                        </div>
+
+                        {error && error !== 'Template not found' && (
+                            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="flex justify-end space-x-4">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => router.push('/projects/new')}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={loading}>
+                                {loading ? 'Creating...' : 'Create Project'}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}

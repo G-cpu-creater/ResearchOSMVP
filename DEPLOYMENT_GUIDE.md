@@ -1,0 +1,76 @@
+# 🚀 How to Deploy ElctrDc (Collaborator Guide)
+
+This guide explains how to deploy your own version of ElctrDc to Vercel for free using the "Fork Method". This avoids the Vercel Pro requirement for teams.
+
+## Step 1: Fork the Repository
+1. Go to the main repository on GitHub: [https://github.com/sukesh19o224-cpu/ElctrDc](https://github.com/sukesh19o224-cpu/ElctrDc)
+2. Click the **"Fork"** button in the top-right corner.
+3. Create the fork under **your own personal GitHub account**.
+
+## Step 2: Deploy to Vercel
+1. Go to [Vercel.com](https://vercel.com) and log in with your GitHub account.
+2. Click **"Add New..."** -> **"Project"**.
+3. Select **your forked repository** (e.g., `your-username/ElctrDc`) and click **Import**.
+
+## Step 3: Configure Environment Variables (CRITICAL)
+Before clicking "Deploy", you must add the following Environment Variables in the Vercel project setup screen.
+
+**Copy and paste these exact values:**
+
+| Variable Name | Value |
+|--------------|-------|
+| `GROQ_API_KEY` | `your_groq_api_key_here` |
+| `DATABASE_URL` | `your_database_url_here` |
+| `NEXTAUTH_SECRET` | `your_nextauth_secret_here` |
+| `NEXTAUTH_URL` | `https://YOUR-VERCEL-APP-URL.vercel.app` (Update this after deployment!) |
+
+### ⚠️ Important Note on `NEXTAUTH_URL`
+- For the initial deployment, you can set `NEXTAUTH_URL` to `http://localhost:3000`.
+- **After deployment succeeds**, Vercel will give you a domain (e.g., `elctrdc-friend.vercel.app`).
+- Go to **Settings -> Environment Variables** in Vercel, update `NEXTAUTH_URL` to your actual Vercel domain, and **Redeploy**.
+
+### ⚠️ Missing Variable: `BLOB_READ_WRITE_TOKEN`
+This token is required for file uploads (PDFs, images).
+
+| Variable Name | Value |
+|--------------|-------|
+| `BLOB_READ_WRITE_TOKEN` | `vercel_blob_rw_z5Pqwh55j92Yfljg_gSaywHbLjmcW0F1fG8qY1p4Y0YaGxK` |
+
+**Note:** By using this token, both you and Sukesh will share the same file storage. This is the easiest way to get started!
+
+## Step 4: Deploy
+1. Click **"Deploy"**.
+2. Wait for the build to finish (approx. 2-3 minutes).
+3. Once live, your app is ready!
+
+## Step 5: How to Run Locally (Test on your Laptop)
+To run the project on your own computer, you need to set up your local environment variables.
+
+1. **Pull the code:**
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/ElctrDc.git
+   cd ElctrDc
+   npm install
+   ```
+
+2. **Create a `.env` file:**
+   Create a file named `.env` in the root folder and paste the following with your actual values:
+
+   ```env
+   DATABASE_URL="your_database_url_here"
+   GROQ_API_KEY="your_groq_api_key_here"
+   NEXTAUTH_SECRET="your_nextauth_secret_here"
+   NEXTAUTH_URL="http://localhost:3000"
+   BLOB_READ_WRITE_TOKEN="your_blob_token_here"
+   ```
+
+3. **Run the app:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Step 6: How to Collaborate
+- **To make changes:** Edit code on your laptop, push to your fork (`git push origin main`). Vercel will auto-deploy your site.
+- **To share changes:** Go to GitHub and open a **Pull Request** from your fork to the original repository.
+- **To get updates:** Click **"Sync Fork"** on your GitHub repo page to pull the latest changes from the original repo.
